@@ -13,6 +13,17 @@ def update_interview(result,id) :
     cursor.execute(sql, (result,id))
     db.commit()
 
+def get_by_id(interview_id) :
+    sql = "SELECT * FROM interview WHERE id = %s"
+    cursor.execute(sql, (interview_id,))
+    result = cursor.fetchone()
+    return result
+
+def delete_interview(interview_id) :
+    sql = "DELETE FROM interview WHERE id = %s"
+    cursor.execute(sql, (interview_id,))
+    db.commit()
+
 def get_for_final(user_id,interview_id) :
     sql = '''
     SELECT 

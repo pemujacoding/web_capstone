@@ -53,55 +53,62 @@ def gemini_analyze(all_result_stt):
         for idx, item in enumerate(all_result_stt)
     ]
 
-    # Prompt untuk Gemini
+    total_items = len(video_data)
+
+    # generate dynamic score template for Gemini
+    dynamic_score_template = ",\n        ".join(
+        [f'{{"id": {i+1}, "score": x}}' for i in range(total_items)]
+    )
+
+    # Dynamic prompt for Gemini
     prompt = f"""
-    You are an interview assessment engine.
+        You are an interview assessment engine.
 
-    There are interview videos. Each contains:
-    1) The question spoken by the interviewer
-    2) The candidate's answer
+        There are interview videos. Each contains:
+        1) The question spoken by the interviewer
+        2) The candidate's answer
 
-    Here is the extracted STT content for each video (already cleaned):
+        Here is the extracted STT content (already cleaned):
 
-    {json.dumps(video_data, indent=2)}
+        {json.dumps(video_data, indent=2)}
 
-    You must evaluate the candidate based on the official rubric below:
+        You must evaluate the candidate based on the official rubric:
 
-    RUBRIC SCORING (0–4):
-    Score 4 = Comprehensive, very clear, technically strong
-    Score 3 = Specific explanation with basic understanding
-    Score 2 = General response with limited details
-    Score 1 = Minimal or vague response
-    Score 0 = Unanswered or irrelevant
+        RUBRIC SCORING (0–4):
+        Score 4 = Comprehensive, very clear, technically strong  
+        Score 3 = Specific explanation with basic understanding  
+        Score 2 = General response with limited details  
+        Score 1 = Minimal or vague response  
+        Score 0 = Unanswered or irrelevant  
 
-    Your task:
-    1. Score each question using that rubric.
-    2. Produce JSON output ONLY in this format:
+        Your task:
+        1. Score EACH question using that rubric.
+        2. Produce JSON output ONLY in this exact format:
 
-    {{
-    "minScore": 0,
-    "maxScore": 4,
-    "scores": [
-        {{"id": 1, "score": x}},
-        {{"id": 2, "score": x}},
-        {{"id": 3, "score": x}},
-        {{"id": 4, "score": x}},
-        {{"id": 5, "score": x}}
-    ],
-    "communication_score": 0-100,
-    "english_fluency_score": 0-100,
-    "content_quality_score": 0-100
-    }}
+        {{
+            "minScore": 0,
+            "maxScore": 4,
+            "scores": [
+                {dynamic_score_template}
+            ],
+            "communication_score": 0,
+            "english_fluency_score": 0,
+            "content_quality_score": 0
+        }}
 
-    Rules:
-    - Output must be PURE JSON with no explanation.
-    - The `score` must be only the rubric (0–4). No reasoning.
+        RULES:
+        - Output must be PURE JSON only.
+        - `score` must ONLY be a number 0–4 (no extra text).
+        - Do NOT add or remove fields. Match the format exactly.
+        - communication_score MUST be an integer between 0 and 100.
+        - english_fluency_score MUST be an integer between 0 and 100.
+        - content_quality_score MUST be an integer between 0 and 100.
+        - Do NOT write "0-100" in the output. Only output real integers.
     """
-
     try:
         response = safe_generate(PRIMARY_MODEL, prompt)
     except Exception:
         print("[Gemini] Primary model failed. Trying fallback...")
         response = safe_generate(FALLBACK_MODEL, prompt)
-    
+
     return response.text

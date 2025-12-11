@@ -95,8 +95,6 @@ def input_files(video_path,filename,ext,interview_id,question):
 
         conn_input.insert_video_bytes(
             filename,
-            compressed_bytes,
-            audio_bytes,
             result_cd,
             result_stt,
             interview_id
@@ -139,8 +137,12 @@ def final_result(output,c_id,c_name,c_email,c_photoUrl,u_id,u_name,u_email,proje
     }
 
     try:
-        # A. Bersihkan string output
-        gemini_data = json.loads(gemini_output_string)
+        # A. Bersihkan Markdown ```json ... ``` dari string output
+        clean_text = gemini_output_string.replace("```json", "").replace("```", "").strip()
+
+        # B. Parse string JSON menjadi Dictionary Python
+        gemini_data = json.loads(clean_text)
+        print("✅ Berhasil parsing JSON dari Gemini.")
 
     except json.JSONDecodeError as e:
         print("❌ Gagal parsing output Gemini! Pastikan format prompt Gemini sudah benar.")
