@@ -5,9 +5,10 @@
     <h1 class="mt-4 mb-4">Final Result of Interview #{{ interview[0] }}</h1>
 
     <div class="card shadow-sm p-3 mb-4">
+        <!-- Candidate Info -->
         <div class="d-flex align-items-center mb-3">
-            {% if interview.photoUrl %}
-                <img src="{{ interview.photoUrl }}" alt="Candidate Photo" class="rounded mr-3" style="width:80px;height:80px;object-fit:cover;">
+            {% if interview[8] %}
+                <img src="{{ interview[8] }}" alt="Candidate Photo" class="rounded mr-3" style="width:80px;height:80px;object-fit:cover;">
             {% endif %}
             <div>
                 <h5 class="mb-1">{{ interview[6] }}</h5>
@@ -18,49 +19,52 @@
 
         <hr>
 
-        {% if final %}
-            <div class="json-scroll mb-3">
-                 <h5>Final Assessment</h5>
-                <pre>{{ final.result }}</pre>
+        <!-- Tampilkan JSON Final Result jika sudah ada -->
+        {% if final_json_str %}
+            <div class="mb-4">
+                <h5>Current Final Assessment (JSON)</h5>
+                <pre class="bg-light p-3 rounded border json-scroll" style="max-height: 500px; overflow-y: auto;">{{ final_json_str }}</pre>
+            </div>
+
+            <!-- Highlight Recommendation di bawah Overall notes -->
+            {% set rec = existing_recommendation %}
+            <div class="mt-4 p-4 rounded text-white text-center font-weight-bold
+                {% if 'PASS' in rec %}bg-success{% elif 'CONSIDERED' in rec %}bg-warning{% else %}bg-danger{% endif %}">
+                <h4>Recommendation</h4>
+                <p class="mb-0">{{ rec }}</p>
             </div>
         {% else %}
-            <p class="text-muted">Final result has not been generated yet.</p>
-            <h5>Enter Final Assessment</h5>
-            <form action="" method="POST">
-                <div class="form-group mb-3">
-                    <label for="project">Project Score</label>
-                    <input type="number" step="0.01" max="100" min="0" class="form-control" id="project" name="project" placeholder="Enter project score"
-                    value="{{ final.project if final else '' }}">
-                </div>
-
-                <div class="form-group mb-3">
-                    <label for="certificate">Certificate Title</label>
-                    <input type="text" class="form-control" id="certificate" name="certificate" placeholder="Enter certificate title"
-                    value="{{ final.certificate if final else '' }}">
-                </div>
-
-                <div class="form-group mb-3">
-                    <label for="status">Certificate status</label>
-                    <select class="form-control" id="cert_status" name="cert_status">
-                        <option value="Finished">Finished</option>
-                        <option value="On Training">On Training</option>
-                    </select>
-                </div>
-
-                <div class="form-group mb-3">
-                    <label for="decision">Decision</label>
-                    <select class="form-control" id="decision" name="decision">
-                        <option value="Passed" {% if final and final.decision == 'Passed' %}selected{% endif %}>Passed</option>
-                        <option value="Did Not Pass" {% if final and final.decision == 'Did Not Pass' %}selected{% endif %}>Did Not Pass</option>
-                    </select>
-                </div>
-
-                <button type="submit" class="btn btn-primary">Save Final Result</button>
-                <a href="{{ url_for('history') }}" class="btn btn-secondary ml-2">Cancel</a>
-            </form>
+            <p class="text-muted mb-4">Final result has not been generated yet.</p>
         {% endif %}
 
-        <hr>
+        <!-- Form Input / Edit -->
+        <h5 class="mt-4">{% if final_json_str %}Edit{% else %}Enter{% endif %} Final Assessment</h5>
+        <form action="" method="POST">
+            <div class="form-group mb-3">
+                <label for="project_name"><strong>Project Name</strong></label>
+                <input type="text" class="form-control" id="project_name" name="project_name"
+                       placeholder="e.g., Sentiment Analysis Web App" 
+                       value="{{ existing_project_name }}" required>
+            </div>
+
+            <div class="form-group mb-3">
+                <label for="project_score"><strong>Project Score (0-100)</strong></label>
+                <input type="number" step="0.01" min="0" max="100" class="form-control" 
+                       id="project_score" name="project_score"
+                       value="{{ existing_project_score }}" required>
+            </div>
+
+            <div class="form-group mb-3">
+                <label for="notes"><strong>Overall Notes</strong></label>
+                <textarea class="form-control" id="notes" name="notes" rows="6"
+                          placeholder="Enter overall notes about the candidate">{{ existing_notes }}</textarea>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-lg">
+                {% if final_json_str %}Update{% else %}Save{% endif %} Final Result
+            </button>
+            <a href="{{ url_for('history') }}" class="btn btn-secondary btn-lg ml-2">Back to History</a>
+        </form>
     </div>
 </div>
 {% endblock %}

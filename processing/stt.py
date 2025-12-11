@@ -17,3 +17,4 @@ def speech_to_text(audio_bytes, audio_name,question):
         'Answer' : transcription.text
     }
     return result_stt
+
