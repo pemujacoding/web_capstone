@@ -93,3 +93,68 @@ def get_history(user_id):
             })
 
     return list(interviews.values())
+
+# Tambahkan di akhir file model/interview.py
+
+import json
+import re
+
+def clean_json_string(json_str):
+    if not json_str:
+        return "{}"
+    cleaned = re.sub(r'^```json\s*', '', json_str, flags=re.MULTILINE)
+    cleaned = re.sub(r'^```\s*', '', cleaned, flags=re.MULTILINE)
+    cleaned = re.sub(r'```$', '', cleaned)
+    return cleaned.strip()
+
+def get_interviews_checklist(json_str):
+    cleaned = clean_json_string(json_str)
+    try:
+        data = json.loads(cleaned)
+        scores_list = data.get("scores", [])
+        valid_scores = []
+        for item in scores_list:
+            score_item = {
+                "id": item.get("id", 0),  # Default jika kosong
+                "score": item.get("score", 0),
+                "reason": item.get("reason", "No reason provided")  # Default jika tidak ada
+            }
+            valid_scores.append(score_item)
+        
+        interviews = {
+            "minScore": data.get("minScore", 0),
+            "maxScore": data.get("maxScore", 4),
+            "scores": valid_scores
+        }
+        return interviews
+    except json.JSONDecodeError as e:
+        print(f"[ERROR] Gagal parse interview JSON: {e} - Cleaned string: {cleaned}")
+        return {
+            "minScore": 0,
+            "maxScore": 4,
+            "scores": []
+        }
+    except Exception as e:
+        print(f"[ERROR] Exception in checklist: {e}")
+        return {
+            "minScore": 0,
+            "maxScore": 4,
+            "scores": []
+        }
+
+def parse_interview_score_normalized(json_str):
+    """Sama seperti sebelumnya, untuk hitung interview score 0-100"""
+    cleaned = clean_json_string(json_str)
+    try:
+        data = json.loads(cleaned)
+        scores_list = data.get("scores", [])
+        if not scores_list:
+            return 0.0
+        total = sum(item.get("score", 0) for item in scores_list if isinstance(item.get("score"), (int, float)))
+        count = len([s for s in scores_list if isinstance(s.get("score"), (int, float))])
+        if count == 0:
+            return 0.0
+        avg = total / count
+        return round((avg / 4.0) * 100, 2)
+    except:
+        return 0.0

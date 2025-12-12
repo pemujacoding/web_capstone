@@ -27,11 +27,8 @@ def run_detection(video_path):
         if frame_id % SKIP != 0:
             continue
 
-        # resize agar inference cepat
-        frame = cv2.resize(frame, (480, 270))
-
         # YOLO inference
-        results = model(frame, imgsz=480, conf=0.6, verbose=False)[0]
+        results = model(frame, imgsz=480, conf=0.3, verbose=False)[0]
         person_count = sum(1 for box in results.boxes if int(box.cls) == 0)
 
         if person_count > 1:
